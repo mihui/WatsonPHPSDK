@@ -52,4 +52,8 @@ class SimpleTokenProvider implements TokenProviderInterface {
 
         return self::$_token;
     }
+
+    public function setToken($token){
+        self::$_token = $token;
+    }
 }

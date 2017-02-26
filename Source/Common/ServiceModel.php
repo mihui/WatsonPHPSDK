@@ -17,6 +17,8 @@
 
 namespace WatsonSDK\Common;
 
+use \ReflectionClass;
+
 class ServiceModel {
 
     // Username
@@ -25,6 +27,8 @@ class ServiceModel {
     private $_password;
     // Token provider
     private $_token_provider;
+    // Token
+    private $_token;
 
     /**
      * Get username
@@ -36,7 +40,7 @@ class ServiceModel {
 
     /**
      * Set username
-     * @param $val
+     * @param $val string
      */
     public function setUsername($val) {
         $this->_username = $val;
@@ -52,7 +56,7 @@ class ServiceModel {
 
     /**
      * Set password
-     * @param $val
+     * @param $val string
      */
     public function setPassword($val) {
         $this->_password = $val;
@@ -75,20 +79,42 @@ class ServiceModel {
     }
 
     /**
-     * Generate request data
-     * @return string
+     * Get token string
+     * @param $val string
      */
-    public function getData() {
+    public function getToken() {
+        return $this->_token;
+    }
 
-        $vars = get_object_vars($this);
+    public function setToken($token) {
+        $this->_token = $token;
+    }
 
-        foreach($vars as $key => $value) {
+    public function getData($type = '@query') {
 
-            if(is_null($value) || substr($key, 0, 1) === '_') {
-                unset($vars[$key]);
+        $reflection = new ReflectionClass($this);
+        $attributes = $reflection->getProperties();
+        $queries = [];
+
+        foreach($attributes as $attribute) {
+            $attribute->setAccessible(true);
+            $docComment = $attribute->getDocComment();
+            $matches = [];
+            $match = preg_match("/{$type}(.*?)\n/", $docComment, $matches);
+
+            if($match) {
+                $key = $attribute->getName();
+                if(count($matches) > 1) {
+                    $name = trim($matches[1]);
+                    $name = preg_replace('/[<>()\[\]{}#\* ]/', '', $name);
+                    if($name !== '') {
+                        $key = $name;
+                    }
+                }
+                $queries[$key] = $attribute->getValue($this);
             }
         }
 
-        return $vars;
+        return $queries;
     }
 }

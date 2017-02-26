@@ -17,8 +17,12 @@
 
 namespace WatsonSDK\Tests;
 
-use WatsonSDK\Common\TokenProviderInterface;
+use WatsonSDK\Common\HttpClient;
+use WatsonSDK\Common\HttpClientConfiguration;
+use WatsonSDK\Common\HttpClientException;
 use WatsonSDK\Common\SimpleTokenProvider;
+use WatsonSDK\Common\SimpleTokenHelper;
+
 use WatsonSDK\Services\ToneAnalyzer;
 use WatsonSDK\Services\ToneAnalyzerModel;
 
@@ -26,30 +30,41 @@ use PHPUnit\Framework\TestCase;
 
 class ToneAnalyzerTest extends TestCase {
 
+    protected function setUp() {
+        $env = new Environment(__DIR__);
+        $env->load();
+    }
+
+    /**
+     * ToneAnalyzerTokenProvider unit test
+     */
     public function testToneAnalyzerTokenProvider () {
 
         $provider = new SimpleTokenProvider('https://your-token-factory-url');
 
         $this->assertInstanceOf(
-            SimpleTokenProvider::class, 
+            SimpleTokenProvider::class,
             $provider
         );
 
         $this->assertEquals($provider->getToken(), NULL);
     }
 
+    /**
+     * ToneAnalyzerModel unit test
+     */
     public function testToneAnalyzerModel () {
 
         $model    = new ToneAnalyzerModel();
         $provider = new SimpleTokenProvider('https://your-token-factory-url');
 
         $this->assertInstanceOf(
-            ToneAnalyzerModel::class, 
+            ToneAnalyzerModel::class,
             $model
         );
 
         $this->assertInstanceOf(
-            ToneAnalyzerModel::class, 
+            ToneAnalyzerModel::class,
             $model
         );
 
@@ -57,37 +72,76 @@ class ToneAnalyzerTest extends TestCase {
         $model->setPassword('p');
         $model->setText('t');
         $model->setTokenProvider($provider);
+        $model->setTones('e');
+        $model->setSentences(true);
 
         $this->assertEquals($model->getUsername(), 'u');
         $this->assertEquals($model->getPassword(), 'p');
         $this->assertEquals($model->getText(), 't');
-
         $this->assertEquals($model->getTokenProvider(), $provider);
-
+        $this->assertEquals($model->getTones(),'e');
+        $this->assertEquals($model->getSentences(), true);
     }
 
+    /**
+     * ToneAnalyzer unit test with basic authentication
+     */
     public function testToneAnalyzer() {
-
         $analyzer = new ToneAnalyzer();
         $model    = new ToneAnalyzerModel();
 
         $this->assertInstanceOf(
-            ToneAnalyzer::class, 
+            ToneAnalyzer::class,
             $analyzer
         );
 
-        print_r($_ENV);
-
         $username = getenv('TONE_ANALYZER_USERNAME');
         $password = getenv('TONE_ANALYZER_PASSWORD');
+
         $model->setUsername($username);
         $model->setPassword($password);
 
-        // $model->setTokenProvider( new SimpleTokenProvider('https://your-token-factory-url') );
         $model->setText('I am so happy!');
+        $model->setTones('social');
 
-        $result = $analyzer->Tone($model);
-
-        print_r($result);
+        if(isset($username) && isset($password)) {
+            $result = $analyzer->Tone($model);
+            $this->assertEquals(200, $result->getStatusCode());
+            // @todo: evaluate $result->getContent();
+        }
     }
+
+    public function testToneWithTokenProvider() {
+        $analyzer = new ToneAnalyzer();
+        $model    = new ToneAnalyzerModel();
+        $tokenProvider = new SimpleTokenProvider('');
+
+        $username = getenv('TONE_ANALYZER_USERNAME');
+        $password = getenv('TONE_ANALYZER_PASSWORD');
+
+        try {
+            $token = $this->getToken($username, $password);
+            $tokenProvider->setToken($token);
+            $model->setTokenProvider($tokenProvider);
+            $model->setText('I feel so happy');
+
+            $result = $analyzer->Tone($model);
+
+            $this->assertEquals(200, $result->getStatusCode());
+        }
+        catch(HttpClientException $ex) {
+            
+        }
+    }
+
+    /**
+     * Request a new token
+     */ 
+    private function getToken($username, $password) {
+
+        $serviceUrl = 'https://gateway.watsonplatform.net/tone-analyzer/api/v3/tone?version=2016-05-19';
+
+        return SimpleTokenHelper::requestToken($username, $password, $serviceUrl);
+    }
+
 }

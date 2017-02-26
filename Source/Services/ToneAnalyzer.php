@@ -43,7 +43,8 @@ class ToneAnalyzer {
      */
     public function Tone(ToneAnalyzerModel $model) {
 
-        $this->_httpConfig->setData($model->getData());
+        $this->_httpConfig->setData($model->getData('@data'));
+        $this->_httpConfig->setQuery($model->getData('@query'));
 
         if(is_null($model->getTokenProvider())) {
             // Basic authentication
@@ -52,19 +53,20 @@ class ToneAnalyzer {
         else {
             // Token authentication
             $token = $model->getTokenProvider()->getToken();
-            $this->_httpConfig->setHeader([ 'X-Watson-Authorization-Token' => $token ]);
+            $model->setToken($token);
+            $this->_httpConfig->setHeader([ 'X-Watson-Authorization-Token' => $model->getToken() ]);
         }
 
         $this->_httpConfig->setMethod(HttpClientConfiguration::METHOD_POST);
         $this->_httpConfig->setType(HttpClientConfiguration::DATA_TYPE_JSON);
-        $this->_httpConfig->setQuery([ 'version' => $model->getVersion() ]);
         $this->_httpConfig->setURL(ToneAnalyzerModel::BASE_URL."/tone");
 
         try {
             return $this->_httpClient->request($this->_httpConfig);
         }
         catch(HttpClientException $ex) {
-            return new HttpResponse($ex->getMessage(), $ex->getCode());
+            $response=new HttpResponse($ex->getCode(),$ex->getMessage());
+            return $response;
         }
     }
 }
