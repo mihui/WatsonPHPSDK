@@ -40,7 +40,8 @@ final class HttpClientTest extends TestCase {
         $this->assertEquals($config->getTimeout(), 0);
         $this->assertNull($config->getType());
         $this->assertEquals($config->getQuery(), []);
-        $this->assertEquals($config->getQuery(), []);
+        $this->assertEquals($config->getHeader(), []);
+        $this->assertEquals($config->getData(), []);
         $this->assertEquals($config->toOptions(), []);
         // 
         $config->setCredentials([ 'username', 'password' ]);
@@ -58,8 +59,14 @@ final class HttpClientTest extends TestCase {
         $config->setTimeout(20000);
         $this->assertEquals($config->getTimeout(), 20000);
         // 
-        $config->setURL('https://www.ibm.com/watson/developercloud/');
-        $this->assertEquals($config->getURL(), 'https://www.ibm.com/watson/developercloud/');
+        $config->setURL('https://phpsdk.mybluemix.net/');
+        $this->assertEquals($config->getURL(), 'https://phpsdk.mybluemix.net/');
+        //
+        $config->setType(HttpClientConfiguration::DATA_TYPE_FORM);
+        $this->assertEquals($config->getType(), 'form_params');
+        //
+        $this->assertEquals($config->toOptions(), [ 'form_params' => [ 'key' => 'value' ], 'query' => [ 'p' => 'q' ], 
+        'headers' => [ 'p' => 'q' ], 'auth' => [ 'username', 'password' ], 'timeout' => 20000 ]);
     }
 
     // 
@@ -67,7 +74,7 @@ final class HttpClientTest extends TestCase {
 
         $httpClient = new HttpClient();
         $config = new HttpClientConfiguration();
-        $config->setURL('https://www.ibm.com/watson/developercloud/');
+        $config->setURL('https://phpsdk.mybluemix.net/');
 
         $this->assertInstanceOf(
             HttpClient::class, 
@@ -81,7 +88,7 @@ final class HttpClientTest extends TestCase {
         $this->assertNotEquals($response->getSize(), 0);
 
         try {
-            $response = $httpClient->request(new HttpClientConfiguration('http://mihui.net/404'));
+            $response = $httpClient->request(new HttpClientConfiguration('https://phpsdk.mybluemix.net/404.php'));
         }
         catch (HttpClientException $ex) {
             $this->assertEquals($ex->getCode(), 404);

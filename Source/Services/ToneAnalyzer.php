@@ -21,41 +21,31 @@ use WatsonSDK\Common\HttpClient;
 use WatsonSDK\Common\HttpResponse;
 use WatsonSDK\Common\HttpClientConfiguration;
 use WatsonSDK\Common\HttpClientException;
+use WatsonSDK\Common\WatsonService;
+use WatsonSDK\Common\WatsonCredential;
 
-class ToneAnalyzer {
-
-    private $_httpClient;
-    private $_httpConfig;
+class ToneAnalyzer extends WatsonService {
 
     /**
      * Constructor
+     * 
+     * @param $credential WatsonCredential
      */
-    function __construct() {
+    function __construct(WatsonCredential $credential) {
 
-        $this->_httpClient = new HttpClient();
-        $this->_httpConfig = new HttpClientConfiguration();
+        parent::__construct($credential);
     }
 
     /**
      * Invoke `tone` service
      * 
+     * @param $model ToneAnalyzerModel
      * @return HttpResponse
      */
     public function Tone(ToneAnalyzerModel $model) {
 
         $this->_httpConfig->setData($model->getData('@data'));
         $this->_httpConfig->setQuery($model->getData('@query'));
-
-        if(is_null($model->getTokenProvider())) {
-            // Basic authentication
-            $this->_httpConfig->setCredentials([ $model->getUsername(), $model->getPassword() ]);
-        }
-        else {
-            // Token authentication
-            $token = $model->getTokenProvider()->getToken();
-            $model->setToken($token);
-            $this->_httpConfig->setHeader([ 'X-Watson-Authorization-Token' => $model->getToken() ]);
-        }
 
         $this->_httpConfig->setMethod(HttpClientConfiguration::METHOD_POST);
         $this->_httpConfig->setType(HttpClientConfiguration::DATA_TYPE_JSON);
@@ -65,7 +55,7 @@ class ToneAnalyzer {
             return $this->_httpClient->request($this->_httpConfig);
         }
         catch(HttpClientException $ex) {
-            $response=new HttpResponse($ex->getCode(),$ex->getMessage());
+            $response = new HttpResponse($ex->getCode(),$ex->getMessage());
             return $response;
         }
     }

@@ -8,26 +8,36 @@ Watson PHP SDK for IBM Watson Developer Cloud
 
 ## Installation
 
-#### Dependency Management
-
-We recommend installing [Composer](http://getcomposer.org) to manage dependencies for your application.
-
-You can install Composer with curl: 
-```shell
-curl -sS https://getcomposer.org/installer | php
-```
+Installing [Composer](http://getcomposer.org) will be easier to manage dependencies for your application.
 
 Run the Composer command to install the latest version of the Watson PHP SDK:
 
 ```shell
-php composer.phar require CognitiveBuild/WatsonPHPSDK:master
+composer require cognitivebuild/watsonphpsdk:dev-master
 ```
 
-After installation, include `autoload.php`:
+If the Watson PHP SDK is downloaded from GitHub already, run the update command:
+```shell
+composer update
+```
+
+Include `autoload.php` in your application:
 
 ```php
 require 'vendor/autoload.php';
 ```
+
+## Namespaces
+For common use, one of the namespaces of `WatsonCredential` or `SimpleTokenProvider` can be optional, depends on how to invoke the Watson services, and you can reference the classes like so:
+```php
+use WatsonSDK\Common\WatsonCredential;
+use WatsonSDK\Common\SimpleTokenProvider;
+use WatsonSDK\Services\ToneAnalyzer;
+use WatsonSDK\Services\ToneAnalyzerModel;
+```
+
+## API Reference
+Please [visit our wiki](https://github.com/CognitiveBuild/WatsonPHPSDK/wiki).
 
 ## Services
 * [Tone Analyzer](#tone-analyzer)
@@ -37,30 +47,23 @@ The IBM Watson Tone Analyzer service can be used to discover, understand, and re
 
 Emotions identified include things like anger, fear, joy, sadness, and disgust. Identified social tendencies include things from the Big Five personality traits used by some psychologists. These include openness, conscientiousness, extraversion, agreeableness, and emotional range. Identified writing styles include confident, analytical, and tentative.
 
-The following example demonstrates how to use the Tone Analyzer service:
+The following example demonstrates how to use the Tone Analyzer service by using credentials:
 
 ```php
-use WatsonSDK\Services\ToneAnalyzer;
-use WatsonSDK\Services\ToneAnalyzerModel;
-
-$analyzer = new ToneAnalyzer();
-$model    = new ToneAnalyzerModel();
-```
-
-Invoke Tone Analyzer API using credentials, 
-```php
-$model->setUsername('your_username');
-$model->setPassword('your_password');
+$analyzer = new ToneAnalyzer( WatsonCredential::initWithCredentials('your_username', 'your_password') );
 ```
 
 or invoke Tone Analyzer API using token, the `SimpleTokenProvider` is a sample of TokenProvider, we recommend you to implement your own Token Provider, by implementing the `TokenProviderInterface`.
 ```php
-$model->setTokenProvider( new SimpleTokenProvider('https://your-token-factory-url') );
+$tokenProvider = new SimpleTokenProvider('https://your-token-factory-url');
+$analyzer = new ToneAnalyzer( WatsonCredential::initWithTokenProvider( $tokenProvider ) );
 ```
 
 Place the content to be analyzed, call the Tone API and check the result: 
 ```php
-$model->setText('your text to be analyzed');
+$model  = new ToneAnalyzerModel();
+$model->setText('your text to be analyzed.');
+
 $result = $analyzer->Tone($model);
 
 // View results
