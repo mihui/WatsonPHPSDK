@@ -50,16 +50,9 @@ final class ToneAnalyzerTest extends TestCase {
             $model
         );
 
-        $this->assertInstanceOf(
-            ToneAnalyzerModel::class, 
-            $model
-        );
-
         $model->setText('t');
         $model->setTones('e');
         $model->setSentences(TRUE);
-
-        $this->assertEquals($model->getVersion(), '2016-05-19');
         $model->setVersion('new-version');
 
         $this->assertEquals($model->getVersion(), 'new-version');
@@ -101,19 +94,24 @@ final class ToneAnalyzerTest extends TestCase {
         if(isset($username) && isset($password)) {
             $result = $analyzer->Tone($model);
             $this->assertEquals(200, $result->getStatusCode());
-            // @todo: evaluate $result->getContent();
         }
     }
 
+    /**
+     * Unit Test for invalid parameters of SimpleTokenProvider
+     */ 
     public function testTokenProviderException() {
 
         $this->expectException(InvalidParameterException::class);
         $provider = new SimpleTokenProvider();
     }
 
+    /**
+     * Unit Test for invalid token
+     */ 
     public function testTokenProvider() {
 
-        $provider = new SimpleTokenProvider('https://phpsdk.mybluemix.net/token.php');
+        $provider = new SimpleTokenProvider('https://phpsdk.mybluemix.net/invalidToken.php');
         $analyzer = new ToneAnalyzer(WatsonCredential::initWithTokenProvider($provider));
 
         $model = new ToneAnalyzerModel();
@@ -123,26 +121,25 @@ final class ToneAnalyzerTest extends TestCase {
         $this->assertEquals($result->getStatusCode(), 403);
     }
 
+    /**
+     * Unit Test for ToneAnalzyer with Token Provider
+     */ 
     public function testToneWithTokenProvider() {
 
-        try {
-            $username = getenv('TONE_ANALYZER_USERNAME');
-            $password = getenv('TONE_ANALYZER_PASSWORD');
-            $token = $this->getToken($username, $password);
+        $username = getenv('TONE_ANALYZER_USERNAME');
+        $password = getenv('TONE_ANALYZER_PASSWORD');
 
-            $provider = new SimpleTokenProvider(NULL, $token);
-            $analyzer = new ToneAnalyzer(WatsonCredential::initWithTokenProvider($provider));
+        $token = $this->getToken($username, $password);
 
-            $model = new ToneAnalyzerModel();
-            $model->setText('I feel so happy');
+        $provider = new SimpleTokenProvider(NULL, $token);
+        $analyzer = new ToneAnalyzer(WatsonCredential::initWithTokenProvider($provider));
 
-            $result = $analyzer->Tone($model);
+        $model = new ToneAnalyzerModel();
+        $model->setText('I feel so happy');
 
-            $this->assertEquals(200, $result->getStatusCode());
-        }
-        catch(HttpClientException $ex) {
-            
-        }
+        $result = $analyzer->Tone($model);
+
+        $this->assertEquals(200, $result->getStatusCode());
     }
 
     /**
@@ -150,7 +147,7 @@ final class ToneAnalyzerTest extends TestCase {
      */ 
     private function getToken($username, $password) {
 
-        $serviceUrl = 'https://gateway.watsonplatform.net/tone-analyzer/api/v3/tone?version=2016-05-19';
+        $serviceUrl = ToneAnalyzerModel::BASE_URL.'/analyze?version='.ToneAnalyzerModel::VERSION;
 
         return SimpleTokenHelper::requestToken($username, $password, $serviceUrl);
     }

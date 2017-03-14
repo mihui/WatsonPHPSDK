@@ -25,9 +25,9 @@ use WatsonSDK\Common\WatsonService;
 use WatsonSDK\Common\WatsonCredential;
 
 /**
- * Tone Analyzer class
+ * Personality Insights class
  */
-class ToneAnalyzer extends WatsonService {
+class PersonalityInsights extends WatsonService {
 
     /**
      * Constructor
@@ -40,19 +40,24 @@ class ToneAnalyzer extends WatsonService {
     }
 
     /**
-     * Invoke `tone` service
+     * Generates a personality profile for the author of the input text. 
+     * The service accepts a maximum of 20 MB of input content. 
+     * It can analyze text in Arabic, English, Japanese, or Spanish and return its results in a variety of languages. 
+     * You can provide plain text, HTML, or JSON input. 
+     * The service returns output in JSON format by default, but you can request the output in CSV format. 
      * 
-     * @param $model ToneAnalyzerModel
+     * @param $model PersonalityInsightsModel
      * @return HttpResponse
      */
-    public function Tone(ToneAnalyzerModel $model) {
+    public function Profile(PersonalityInsightsModel $model) {
 
         $this->_httpConfig->setData($model->getData('@data'));
         $this->_httpConfig->setQuery($model->getData('@query'));
+        $this->_httpConfig->addHeaders($model->getData('@header'));
 
         $this->_httpConfig->setMethod(HttpClientConfiguration::METHOD_POST);
         $this->_httpConfig->setType(HttpClientConfiguration::DATA_TYPE_JSON);
-        $this->_httpConfig->setURL(ToneAnalyzerModel::BASE_URL."/tone");
+        $this->_httpConfig->setURL(PersonalityInsightsModel::BASE_URL."/profile");
 
         try {
             return $this->_httpClient->request($this->_httpConfig);
